@@ -226,11 +226,12 @@ fn set_up() -> crossterm::Result<()> {
 }
 
 fn save(projects: Vec<Project>) {
+    use std::env::var;
     use std::fs::OpenOptions;
     use std::io::Write;
     let mut file = OpenOptions::new()
         .write(true)
-        .open("C:\\Users\\mazav\\OneDrive\\Documents\\things\\switcher\\PROJECTS")
+        .open(var("PROJECTS").unwrap())
         .unwrap();
     let mut s: String = String::new();
     for project in projects {
@@ -281,8 +282,16 @@ fn clean_up() -> crossterm::Result<()> {
 }
 
 fn main() -> crossterm::Result<()> {
+    use std::env::{var, set_var};
+    if var("PROJECTS").is_err() {
+        set_var("PROJECTS", dirs::config_dir().unwrap().join("switcher").join("PROJECTS"));
+        if !std::path::Path::new(&var("PROJECTS").unwrap()).exists(){
+            std::fs::create_dir_all(var("PROJECTS").unwrap()).unwrap();
+            std::fs::File::create(&var("PROJECTS").unwrap())?;
+        }
+    }
     let mut projects =
-        parse_file("C:\\Users\\mazav\\OneDrive\\Documents\\things\\switcher\\PROJECTS")?;
+        parse_file(&var("PROJECTS").expect("var PROJECTS is not defined"))?;
     set_up()?;
     keys(&mut projects)?;
     clean_up()?;
